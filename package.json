@@ -1,5 +1,5 @@
 {
-    "name": "node-directive",
+    "name": "@zhinjs/directive",
     "version": "0.0.1",
     "type": "module",
     "description": "a simple raw directive parser for nodejs",
@@ -11,14 +11,17 @@
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "files": [
-        "lib"
+        "lib",
+        "README.md",
+        "LICENSE",
+        "package.json"
     ],
     "exports": {
         ".": {
-            "import": "./lib/esm/directive.js",
-            "require": "./lib/cjs/directive.js",
-            "types": "./lib/types/directive.d.ts",
-            "default": "./lib/cjs/directive.js"
+            "import": "./lib/esm/index.js",
+            "require": "./lib/cjs/index.js",
+            "types": "./lib/types/index.d.ts",
+            "default": "./lib/cjs/index.js"
         }
     },
     "repository": {
