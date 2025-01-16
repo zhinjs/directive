@@ -1,8 +1,11 @@
 {
     "name": "@zhinjs/directive",
-    "version": "0.1.0",
+    "version": "0.1.1",
+    "main": "lib/cjs/index.js",
+    "module": "lib/esm/index.js",
     "type": "module",
-    "description": "a simple raw directive parser for nodejs",
+    "types": "lib/types/index.d.ts",
+    "description": "a simple raw directive parser for javascript/typescript",
     "scripts": {
         "compile": "tsc -b ./tsconfig.cjs.json ./tsconfig.esm.json ./tsconfig.types.json",
         "clean": "rm -rf ./lib",
@@ -16,13 +19,17 @@
         "LICENSE",
         "package.json"
     ],
+    "devDependencies": {
+        "typescript": "latest"
+    },
     "exports": {
         ".": {
             "import": "./lib/esm/index.js",
             "require": "./lib/cjs/index.js",
             "types": "./lib/types/index.d.ts",
             "default": "./lib/cjs/index.js"
-        }
+        },
+        "./package.json": "./package.json"
     },
     "repository": {
         "type": "git",
