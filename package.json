@@ -1,0 +1,38 @@
+{
+    "name": "node-directive",
+    "version": "0.0.1",
+    "type": "module",
+    "description": "a simple raw directive parser for nodejs",
+    "scripts": {
+        "compile": "tsc -b ./tsconfig.cjs.json ./tsconfig.esm.json ./tsconfig.types.json",
+        "clean": "rm -rf ./lib",
+        "build": "npm run clean && npm run compile",
+        "pub": "npm publish --access public",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "files": [
+        "lib"
+    ],
+    "exports": {
+        ".": {
+            "import": "./lib/esm/directive.js",
+            "require": "./lib/cjs/directive.js",
+            "types": "./lib/types/directive.d.ts",
+            "default": "./lib/cjs/directive.js"
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/zhinjs/directive.git"
+    },
+    "keywords": [
+        "directive",
+        "command"
+    ],
+    "author": "凉菜",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/zhinjs/directive/issues"
+    },
+    "homepage": "https://github.com/zhinjs/directive#readme"
+}
