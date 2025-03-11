@@ -1,22 +1,22 @@
-export class Directive<A extends any[]=[],O={},T extends unknown[]=unknown[]>{
+export class Directive<Rest extends unknown[]=unknown[],A extends any[]=[],O={}>{
     #options:Record<string,Directive.OptionConfig>={}
     #args:Directive.ArgConfig[]=[]
-    #callbacks:Directive.Callback<A,O,any[]>[]=[]
+    #callbacks:Directive.Callback<Rest,A,O>[]=[]
     constructor(public name:string,public description?:string){
     }
-    arg<T extends Directive.DomainDataType,R extends Directive.ValueConfig<T,boolean>>(type:T,options?:R):Directive<[...A,Directive.IsRequiredArg<Directive.ArgType<T>,R>],O>{
+    arg<T extends Directive.DomainDataType,R extends Directive.ValueConfig<T,boolean>>(type:T,options?:R):Directive<Rest,[...A,Directive.IsRequiredArg<Directive.ArgType<T>,R>],O>{
         const [realType,rest]=Directive.resolveType(type)
         this.#args.push({...options,rest,type:realType})
-        return this as unknown as Directive<[...A,Directive.IsRequiredArg<Directive.ArgType<T>,R>],O>
+        return this as unknown as Directive<Rest,[...A,Directive.IsRequiredArg<Directive.ArgType<T>,R>],O>
     }
-    option<S extends string,T extends Directive.DomainDataType,R extends Directive.WithAlias<T,boolean>>(name:S,type:T,options?:R):Directive<A,O & Directive.OptionType<S,T,R>>{
+    option<S extends string,T extends Directive.DomainDataType,R extends Directive.WithAlias<T,boolean>>(name:S,type:T,options?:R):Directive<Rest,A,O & Directive.OptionType<S,T,R>>{
         const [realType,rest]=Directive.resolveType(type)
         this.#options[name]={...options,rest,type:realType}
-        return this as unknown as Directive<A,O & Directive.OptionType<S,T,R>>
+        return this as unknown as Directive<Rest,A,O & Directive.OptionType<S,T,R>>
     }
-    handle<NT extends unknown[]>(callback:Directive.Callback<A,O,NT>){
+    handle(callback:Directive.Callback<Rest,A,O>){
         this.#callbacks.push(callback)
-        return this as unknown as Directive<A,O,NT>;
+        return this as unknown as Directive<Rest,A,O>;
     }
     #matchOption(name:string,option:Directive.OptionConfig,argv:string[],options:Record<string,any>){
         const {alias,type}=option
@@ -70,9 +70,11 @@ export class Directive<A extends any[]=[],O={},T extends unknown[]=unknown[]>{
         const args=[]
         for(let index=0;index<this.#args.length;index++){
             this.#matchArg(index,this.#args[index],argv,args)
+            // unMatched, set to initial value
             if(args[index]===undefined && this.#args[index].initialValue) args[index]=this.#args[index].initialValue
+            // unMatched and required, throw error
             if(args[index]===undefined && this.#args[index].required){
-                throw new Error(`argument ${index} is required`)
+                throw new Error(`argument of index ${index} is required`)
             }
         }
         return args as A
@@ -81,7 +83,7 @@ export class Directive<A extends any[]=[],O={},T extends unknown[]=unknown[]>{
         const {type, rest} = arg
         const validator = Directive.createValidator(type)
         if(rest){
-            args.push(argv.map(validator.transform))
+            args[index]=argv.map(validator.transform)
             argv.splice(0,argv.length)
             return;
         }
@@ -92,7 +94,7 @@ export class Directive<A extends any[]=[],O={},T extends unknown[]=unknown[]>{
                 case 'number':{
                     const res=validator.transform(value)
                     if(validator.validate(res)) {
-                        args.push(res)
+                        args[index]=res
                         argv.shift()
                     }
                     break
@@ -100,7 +102,7 @@ export class Directive<A extends any[]=[],O={},T extends unknown[]=unknown[]>{
                 case 'boolean':{
                     const res=validator.transform(value)
                     if(validator.validate(res)) {
-                        args.push(res)
+                        args[index]=res
                         argv.shift()
                     }
                     break
@@ -112,7 +114,18 @@ export class Directive<A extends any[]=[],O={},T extends unknown[]=unknown[]>{
         const [options,newArgv]=this.#matchOptions(argv)
         return {options, args:this.#matchArgs(newArgv)}
     }
-    async match(message:string,...rest:T){
+    get help(){
+        const options=Object.entries(this.#options).map(([name,option])=>{
+            const {alias,type,description}=option
+            return `--${name},-${alias} <${type}> ${description}`
+        }).join('\n')
+        const args=this.#args.map((arg,index)=>{
+            const {type,description}=arg
+            return `<${type}> ${description}`
+        }).join('\n')
+        return `${this.name} ${this.description}\n${options}\n${args}`
+    }
+    async match(message:string,...rest:Rest){
         const [name,...args]=message.split(/\s+/)
         if(!name||name!==this.name) return
         const ctx=this.#match([...args])
@@ -142,7 +155,7 @@ export namespace Directive{
         options:O
     }
     export type Awaitable<T>=T|Promise<T>
-    export type Callback<A extends any[]=[],O={},T extends any[]=[]>=(matched:Matched<A,O>,...args:T)=>Awaitable<string|void>
+    export type Callback<Rest extends unknown[]=unknown[],A extends any[]=[],O={}>=(matched:Matched<A,O>,...args:Rest)=>Awaitable<string|void>
     export type OptionConfig=WithType<WithAlias>
     export type ArgConfig=WithType<ValueConfig>
     export interface WithAlias<T extends DomainDataType=DomainDataType,R extends boolean=boolean> extends ValueConfig<T,R>{
